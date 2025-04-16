@@ -1,6 +1,6 @@
 {
     "deploy": {
-      "startCommand": "daphne -b 0.0.0.0 -p 8000 devlok_crm.asgi:application"
+      "command": "python manage.py makemigrations && python manage.py migrate && daphne devlok_crm.asgi:application & celery -A devlok_crm worker --loglevel=info"
     }
   }
   
