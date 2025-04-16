@@ -83,6 +83,10 @@ TEMPLATES = [
 ASGI_APPLICATION = "devlok_crm.asgi.application"
 WSGI_APPLICATION = 'devlok_crm.wsgi.application'
 
+ROOT_URLCONF = 'devlok_crm.urls'
+
+
+
 CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
