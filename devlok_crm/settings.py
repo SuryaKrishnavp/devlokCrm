@@ -11,6 +11,8 @@ DEBUG = True
 
 ALLOWED_HOSTS = ["devlokcrm-production.up.railway.app"]  # Set specific Railway domain in production for security
 
+DATABASES_URL = "postgresql://postgres:meRuUbwwDedkcSoUxdUkXwXfvBrPROBZ@postgres.railway.internal:5432/railway"
+
 # Installed apps
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -101,23 +103,14 @@ CHANNEL_LAYERS = {
 
 # Database (Railway: uses DATABASE_URL env)
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'railway',  # Your database name (replace with the actual name if different)
-        'USER': 'postgres',  # PostgreSQL user (usually 'postgres' on Railway)
-        'PASSWORD': 'meRuUbwwDedkcSoUxdUkXwXfvBrPROBZ',  # Replace with your DB password from environment variables
-        'HOST': 'postgres.railway.internal',  # Railway's PostgreSQL host
-        'PORT': '5432',  # Default PostgreSQL port (5432)
-        'OPTIONS': {
-            'sslmode': 'require',  # Enforces SSL connection for secure communication
-        },
-    }
+    'default': dj_database_url.config( default=DATABASES_URL, conn_max_age=1800)
 }
+
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
-    {'NAME': 'django.contrib.auth.papostgres.railway.internalssword_validation.CommonPasswordValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
