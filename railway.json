@@ -1,6 +1,6 @@
 {
     "deploy": {
-      "command": "python manage.py makemigrations && python manage.py migrate && python manage.py collectstatic --noinput && daphne -b 0.0.0.0 -p $PORT devlok_crm.asgi:application"
+      "command": "python manage.py makemigrations && python manage.py migrate && python manage.py collectstatic --noinput && daphne devlok_crm.asgi:application -p $PORT"
     }
   }
   
