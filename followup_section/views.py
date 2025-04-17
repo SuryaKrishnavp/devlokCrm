@@ -46,7 +46,7 @@ def create_followup(request, lead_id):
     serializer = FollowUpSerializer(data=request.data)
     if serializer.is_valid():
         followup_date = serializer.validated_data.get("followup_date")
-
+        followup_date = localtime(followup_date)
         existing_followup = FollowUp.objects.filter(
             follower=salesmanager,
             followup_date=followup_date
