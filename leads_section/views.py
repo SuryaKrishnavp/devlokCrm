@@ -808,7 +808,7 @@ def unrecorded_leads_admin(request):
     if not hasattr(admin, 'admin_reg'):
         return Response({'error': 'Admin authentication required'}, status=status.HTTP_403_FORBIDDEN)
     
-    followed_leads = Leads.objects.filter(status="Followed",stage="Not opened").order_by('-timestamp')
+    followed_leads = Leads.objects.filter(status="Followed",stage="Not Opened").order_by('-timestamp')
     serializer = LeadsViewSerializer(followed_leads,many=True).data
     return Response(serializer,status=200)
 
