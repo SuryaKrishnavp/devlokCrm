@@ -93,7 +93,7 @@ CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
-            "hosts": [os.getenv('REDIS_URL', 'redis://default:ukhVBXycMiVXKDAUtUCRsKRarzXfHUnk@redis.railway.internal:6379')],
+            "hosts": [os.getenv('REDIS_URL', 'redis://default:ukhVBXycMiVXKDAUtUCRsKRarzXfHUnk@centerbeam.proxy.rlwy.net:55935')],
         },
     },
     "notifications": {
@@ -145,7 +145,7 @@ GOOGLE_SHEETS_CREDENTIALS = os.path.join(BASE_DIR, "google_sheets_credentials.js
 GOOGLE_SHEET_ID = "1JjqmCd_3coQA6kc9D5EX8zsI26JGIGLgunckotWk3GA"
 
 # Celery with Redis
-CELERY_BROKER_URL = os.getenv('REDIS_URL', 'redis://default:ukhVBXycMiVXKDAUtUCRsKRarzXfHUnk@redis.railway.internal:6379')
+CELERY_BROKER_URL = os.getenv('REDIS_URL', 'redis://default:ukhVBXycMiVXKDAUtUCRsKRarzXfHUnk@centerbeam.proxy.rlwy.net:55935')
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 
