@@ -161,6 +161,7 @@ CORS_ALLOW_HEADERS = [
 ]
 
 CORS_ALLOWED_ORIGINS = [
+    "https://devlokcrmfrontend-production.up.railway.app",
     "https://devlokcrm-production.up.railway.app",
     "http://127.0.0.1:5173",
     "http://localhost:5173",
