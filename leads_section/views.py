@@ -383,7 +383,7 @@ def leads_graph_data(request):
 @permission_classes([AllowAny])
 def get_new_leads(request):
     
-    leads = Leads.objects.filter(stage="Not Opened",status="pending").order_by('-timestamp')
+    leads = Leads.objects.filter(stage="Not Opened",status="Pending").order_by('-timestamp')
     
     # Serialize leads data
     serializer = LeadsViewSerializer(leads, many=True)
