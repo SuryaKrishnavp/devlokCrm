@@ -232,14 +232,14 @@ def get_followup_reminders(request):
 
     notifications = [
         {
-            "message": f"⏳ Reminder: Your follow-up is in 5 minutes at {localtime(followup['followup_date'])}. Notes: {followup['notes']}"
+            "message": f"⏳ Reminder: Your follow-up is in 5 minutes at {localtime(followup['followup_date']).strftime('%Y-%m-%d %H:%M')}. Notes: {followup['notes']}"
         }
         for followup in upcoming_followups
     ]
     event_notifications = [
         {
             "type": "event",
-            "message": f"📅 Event Alert: '{e['event_name']}' is scheduled in 5 minutes at {localtime(e['date_time'])}. Priority: {e['priority']}. Notes: {e['notes']}"
+            "message": f"📅 Event Alert: '{e['event_name']}' is scheduled in 5 minutes at {localtime(e['date_time']).strftime('%Y-%m-%d %H:%M')}. Priority: {e['priority']}. Notes: {e['notes']}"
         }
         for e in upcoming_events
     ]

@@ -600,7 +600,8 @@ def get_event_reminder_admin(request):
     event_notifications = [
         {
             "type": "event",
-            "message": f"📅 Event Alert: '{e['event_name']}' is scheduled in 5 minutes at {localtime(e['date_time'])}. Priority: {e['priority']}. Notes: {e['notes']}"
+            "message": f"📅 Event Alert: '{e['event_name']}' is scheduled in 5 minutes at {localtime(e['date_time']).strftime('%Y-%m-%d %H:%M')}. Priority: {e['priority']}. Notes: {e['notes']}"
+
         }
         for e in upcoming_events
     ]
