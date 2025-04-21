@@ -462,7 +462,7 @@ def send_matching_pdf(request, property_id):
         pdf.drawString(100, y, "Top Matching Properties")
         y -= 30
 
-        for score, match in ranked_matches[:5]:  # Top 5 matches
+        for score, match in ranked_matches[:5]:
             if y < 200:
                 pdf.showPage()
                 y = height - 50
@@ -473,17 +473,16 @@ def send_matching_pdf(request, property_id):
 
             images = match.images.all()
             for image_obj in images:
-                image_path = image_obj.image.path
-                if os.path.exists(image_path):
-                    try:
-                        img = ImageReader(image_path)
-                        if y < 170:
-                            pdf.showPage()
-                            y = height - 50
-                        pdf.drawImage(img, 50, y - 120, width=200, height=120, preserveAspectRatio=True)
-                        y -= 140
-                    except Exception:
-                        y -= 10
+                try:
+                    img = ImageReader(image_obj.image.file)
+                    if y < 170:
+                        pdf.showPage()
+                        y = height - 50
+                    pdf.drawImage(img, 50, y - 120, width=200, height=120, preserveAspectRatio=True)
+                    y -= 140
+                except Exception as e:
+                    print(f"Error rendering image: {e}")
+                    y -= 10
 
         pdf.save()
         buffer.seek(0)
