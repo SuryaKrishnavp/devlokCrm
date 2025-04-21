@@ -456,38 +456,79 @@ def send_matching_pdf(request, property_id):
                 status=status.HTTP_200_OK,
             )
 
-        # === PDF Generation ===
         buffer = BytesIO()
         pdf = canvas.Canvas(buffer, pagesize=A4)
         width, height = A4
         y = height - 50
 
-        # Header
+        logo_path = os.path.join(settings.BASE_DIR, "static", "devicon.jpg")  
+        if os.path.exists(logo_path):
+            try:
+                pdf.drawImage(ImageReader(logo_path), 40, height - 80, width=60, height=60, mask='auto')
+            except Exception:
+                pass
+
+        # Header background
         pdf.setFillColor(colors.HexColor("#2E86C1"))
         pdf.rect(0, height - 60, width, 60, fill=1, stroke=0)
-        pdf.setFont("Helvetica-Bold", 18)
-        pdf.setFillColor(colors.white)
-        pdf.drawCentredString(width / 2, height - 40, "Top Matching Properties")
 
-        y -= 80
+        # Company Info Header
+        pdf.setFont("Helvetica-Bold", 16)
+        pdf.setFillColor(colors.white)
+        pdf.drawString(110, height - 40, "DEVLOK DEVELOPERS")
+        pdf.setFont("Helvetica", 9)
+        pdf.drawString(110, height - 52, "Thrissur, Kerala")
+        pdf.drawRightString(width - 40, height - 40, "9846845777 | 9645129777")
+        pdf.drawRightString(width - 40, height - 52, "info@devlokdevelopers.com | www.devlokdevelopers.com")
+
+        # Short paragraph
+        y -= 90
         pdf.setFillColor(colors.black)
         pdf.setFont("Helvetica", 10)
+        paragraph_text = (
+            "Devlok Developers is pleased to suggest a few matching properties that align with your vision. "
+            "Let us help you discover your dream space."
+        )
+        pdf.drawString(50, y, paragraph_text)
+        y -= 30
 
-        styles = getSampleStyleSheet()
-        styleN = styles["Normal"]
-        styleN.alignment = TA_CENTER
+        # Watermark
+        def draw_watermark(canvas_obj):
+            canvas_obj.saveState()
+            canvas_obj.setFont("Helvetica-Bold", 40)
+            canvas_obj.setFillColorRGB(0.9, 0.9, 0.9)
+            canvas_obj.rotate(45)
+            canvas_obj.drawCentredString(width / 2, height / 3, "DEVLOK DEVELOPERS")
+            canvas_obj.restoreState()
 
-        for idx, (score, match) in enumerate(ranked_matches[:5], start=1):  # Top 5 matches
+        draw_watermark(pdf)
+
+        # Title Section
+        pdf.setFont("Helvetica-Bold", 14)
+        pdf.setFillColor(colors.HexColor("#2E86C1"))
+        pdf.drawString(50, y, "Top Matching Properties")
+        y -= 20
+        pdf.setFillColor(colors.black)
+
+        # Property Details
+        for idx, (score, match) in enumerate(ranked_matches[:5], start=1):
             if y < 200:
                 pdf.showPage()
+                draw_watermark(pdf)
                 y = height - 50
-                # Re-draw header for new page
+
+                # Re-draw header
                 pdf.setFillColor(colors.HexColor("#2E86C1"))
                 pdf.rect(0, height - 60, width, 60, fill=1, stroke=0)
-                pdf.setFont("Helvetica-Bold", 18)
+                pdf.setFont("Helvetica-Bold", 16)
                 pdf.setFillColor(colors.white)
-                pdf.drawCentredString(width / 2, height - 40, "Top Matching Properties")
-                y -= 80
+                pdf.drawString(110, height - 40, "DEVLOK DEVELOPERS")
+                pdf.setFont("Helvetica", 9)
+                pdf.drawString(110, height - 52, "Thrissur, Kerala")
+                pdf.drawRightString(width - 40, height - 40, "9846845777 | 9645129777")
+                pdf.drawRightString(width - 40, height - 52, "info@devlokdevelopers.com | www.devlokdevelopers.com")
+                y -= 90
+                pdf.setFont("Helvetica", 10)
                 pdf.setFillColor(colors.black)
 
             pdf.setFont("Helvetica-Bold", 12)
@@ -508,7 +549,7 @@ def send_matching_pdf(request, property_id):
                 pdf.drawString(60, y, line)
                 y -= 15
 
-            # Show first image only
+            # Include image if exists
             images = match.images.all()
             if images:
                 image_path = images[0].image.path
@@ -517,21 +558,22 @@ def send_matching_pdf(request, property_id):
                         img = ImageReader(image_path)
                         if y < 180:
                             pdf.showPage()
+                            draw_watermark(pdf)
                             y = height - 50
                         pdf.drawImage(img, 60, y - 120, width=180, height=120, preserveAspectRatio=True)
                         y -= 140
                     except Exception:
                         y -= 10
-
             y -= 10  # Spacer
 
-        # Footer/Watermark
-        pdf.setFillColor(colors.lightgrey)
+        # Footer
         pdf.setFont("Helvetica-Oblique", 8)
+        pdf.setFillColor(colors.lightgrey)
         pdf.drawString(50, 30, "Generated by DEVLOK CRM - Property Matching Engine")
 
         pdf.save()
         buffer.seek(0)
+
 
         # === Email with PDF attachment ===
         subject = f"Matching Properties PDF for Property ID {property_id}"
