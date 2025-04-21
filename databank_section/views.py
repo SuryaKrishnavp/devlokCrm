@@ -461,17 +461,17 @@ def send_matching_pdf(request, property_id):
         width, height = A4
         y = height - 50
 
+        # Draw border around the entire page
+        pdf.setStrokeColor(colors.black)
+        pdf.setLineWidth(1)
+        pdf.rect(10, 10, width - 20, height - 20)  # Border with padding of 10px from all sides
+
         # Draw company logo
-        logo_path = os.path.join(settings.BASE_DIR, "static", "devicon.jpg")
-        if os.path.exists(logo_path):
-            try:
-                pdf.drawImage(ImageReader(logo_path), 40, height - 80, width=60, height=60, mask='auto')
-            except Exception:
-                pass
+        # (Add your logo here if necessary)
 
         # Header background
         pdf.setFillColor(colors.HexColor("#2E86C1"))
-        pdf.rect(0, height - 60, width, 60, fill=1, stroke=0)
+        pdf.rect(0, height - 60, width - 60, fill=1, stroke=0)
 
         # Company Info Header
         pdf.setFont("Helvetica-Bold", 16)
