@@ -24,10 +24,6 @@ from io import BytesIO
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.utils import ImageReader
-from reportlab.lib.styles import getSampleStyleSheet
-from reportlab.lib.enums import TA_CENTER
-from reportlab.lib import colors
-from reportlab.platypus import Paragraph, Frame
 from leads_section.models import Leads
 import os
 
@@ -456,129 +452,41 @@ def send_matching_pdf(request, property_id):
                 status=status.HTTP_200_OK,
             )
 
+        # === PDF Generation ===
         buffer = BytesIO()
         pdf = canvas.Canvas(buffer, pagesize=A4)
         width, height = A4
         y = height - 50
 
-        # Draw border around the entire page
-        pdf.setStrokeColor(colors.black)
-        pdf.setLineWidth(1)
-        pdf.rect(10, 10, width - 20, height - 20)  # Border with padding of 10px from all sides
-
-        # Draw company logo
-        # (Add your logo here if necessary)
-
-        # Header background
-        pdf.setFillColor(colors.HexColor("#2E86C1"))
-        pdf.rect(0, height - 60, width - 60, fill=1, stroke=0)
-
-        # Company Info Header
-        pdf.setFont("Helvetica-Bold", 16)
-        pdf.setFillColor(colors.white)
-        pdf.drawString(110, height - 40, "DEVLOK DEVELOPERS")
-        pdf.setFont("Helvetica", 9)
-        pdf.drawString(110, height - 52, "Thrissur, Kerala")
-        pdf.drawRightString(width - 40, height - 40, "9846845777 | 9645129777")
-        pdf.drawRightString(width - 40, height - 52, "info@devlokdevelopers.com | www.devlokdevelopers.com")
-
-        # Short paragraph
-        y -= 90
-        pdf.setFillColor(colors.black)
-        pdf.setFont("Helvetica", 10)
-        paragraph_text = (
-            "Devlok Developers is pleased to suggest a few matching properties that align with your vision. "
-            "Let us help you discover your dream space."
-        )
-        pdf.drawString(50, y, paragraph_text)
+        pdf.setFont("Helvetica-Bold", 14)
+        pdf.drawString(100, y, "Top Matching Properties")
         y -= 30
 
-        # Watermark function
-        def draw_watermark(canvas_obj):
-            canvas_obj.saveState()
-            canvas_obj.setFont("Helvetica-Bold", 40)
-            canvas_obj.setFillColorRGB(0.9, 0.9, 0.9)
-            canvas_obj.rotate(45)
-            canvas_obj.drawCentredString(width / 2, height / 3, "DEVLOK DEVELOPERS")
-            canvas_obj.restoreState()
-
-        draw_watermark(pdf)
-
-        # Title
-        pdf.setFont("Helvetica-Bold", 14)
-        pdf.setFillColor(colors.HexColor("#2E86C1"))
-        pdf.drawString(50, y, "Top Matching Properties")
-        y -= 20
-        pdf.setFillColor(colors.black)
-
-        for idx, (score, match) in enumerate(ranked_matches[:5], start=1):
-            if y < 250:
+        for score, match in ranked_matches[:5]:  # Top 5 matches
+            if y < 200:
                 pdf.showPage()
-                draw_watermark(pdf)
-                # Redraw header
-                pdf.setFillColor(colors.HexColor("#2E86C1"))
-                pdf.rect(0, height - 60, width, 60, fill=1, stroke=0)
-                pdf.setFont("Helvetica-Bold", 16)
-                pdf.setFillColor(colors.white)
-                pdf.drawString(110, height - 40, "DEVLOK DEVELOPERS")
-                pdf.setFont("Helvetica", 9)
-                pdf.drawString(110, height - 52, "Thrissur, Kerala")
-                pdf.drawRightString(width - 40, height - 40, "9846845777 | 9645129777")
-                pdf.drawRightString(width - 40, height - 52, "info@devlokdevelopers.com | www.devlokdevelopers.com")
-                y = height - 130
-                pdf.setFont("Helvetica", 10)
-                pdf.setFillColor(colors.black)
-
-            box_top = y
-            pdf.setStrokeColor(colors.HexColor("#2E86C1"))
-            pdf.setLineWidth(1)
-            pdf.setFont("Helvetica-Bold", 12)
-            pdf.drawString(80, y, f"Match #{idx} (Score: {score})")
-            y -= 20
+                y = height - 50
 
             pdf.setFont("Helvetica", 10)
-            lines = [
-                f"District: {match.district or 'N/A'}",
-                f"Place: {match.place or 'N/A'}",
-                f"Price: ₹{match.demand_price or 'N/A'}",
-                f"Area: {match.area_in_sqft or 'N/A'} sqft",
-                f"BHK: {match.building_bhk or 'N/A'}",
-                f"Roof: {match.building_roof or 'N/A'}",
-                f"Purpose: {match.purpose or 'N/A'}",
-            ]
-            for line in lines:
-                pdf.drawString(100, y, line)
-                y -= 15
+            pdf.drawString(50, y, f"District: {match.district} | Place: {match.place} | Price: ₹{match.demand_price} | Area: {match.area_in_sqft} sqft | BHK: {match.building_bhk or 'N/A'} | Roof: {match.building_roof or 'N/A'}")
+            y -= 20
 
-            # Show images
             images = match.images.all()
             for image_obj in images:
                 image_path = image_obj.image.path
                 if os.path.exists(image_path):
                     try:
-                        if y < 200:
-                            pdf.showPage()
-                            draw_watermark(pdf)
-                            y = height - 120
                         img = ImageReader(image_path)
-                        pdf.drawImage(img, width / 2 - 90, y - 120, width=180, height=120, preserveAspectRatio=True)
+                        if y < 170:
+                            pdf.showPage()
+                            y = height - 50
+                        pdf.drawImage(img, 50, y - 120, width=200, height=120, preserveAspectRatio=True)
                         y -= 140
                     except Exception:
                         y -= 10
 
-            # Border box for property
-            box_bottom = y
-            pdf.rect(70, box_bottom, width - 140, box_top - box_bottom)
-            y -= 20
-
-        # Footer
-        pdf.setFont("Helvetica-Oblique", 8)
-        pdf.setFillColor(colors.lightgrey)
-        pdf.drawString(50, 30, "Generated by DEVLOK CRM - Property Matching Engine")
-
         pdf.save()
         buffer.seek(0)
-
 
         # === Email with PDF attachment ===
         subject = f"Matching Properties PDF for Property ID {property_id}"
