@@ -461,7 +461,8 @@ def send_matching_pdf(request, property_id):
         width, height = A4
         y = height - 50
 
-        logo_path = os.path.join(settings.BASE_DIR, "static", "devicon.jpg")  
+        # Draw company logo
+        logo_path = os.path.join(settings.BASE_DIR, "static", "devicon.jpg")
         if os.path.exists(logo_path):
             try:
                 pdf.drawImage(ImageReader(logo_path), 40, height - 80, width=60, height=60, mask='auto')
@@ -492,7 +493,7 @@ def send_matching_pdf(request, property_id):
         pdf.drawString(50, y, paragraph_text)
         y -= 30
 
-        # Watermark
+        # Watermark function
         def draw_watermark(canvas_obj):
             canvas_obj.saveState()
             canvas_obj.setFont("Helvetica-Bold", 40)
@@ -503,21 +504,18 @@ def send_matching_pdf(request, property_id):
 
         draw_watermark(pdf)
 
-        # Title Section
+        # Title
         pdf.setFont("Helvetica-Bold", 14)
         pdf.setFillColor(colors.HexColor("#2E86C1"))
         pdf.drawString(50, y, "Top Matching Properties")
         y -= 20
         pdf.setFillColor(colors.black)
 
-        # Property Details
         for idx, (score, match) in enumerate(ranked_matches[:5], start=1):
-            if y < 200:
+            if y < 250:
                 pdf.showPage()
                 draw_watermark(pdf)
-                y = height - 50
-
-                # Re-draw header
+                # Redraw header
                 pdf.setFillColor(colors.HexColor("#2E86C1"))
                 pdf.rect(0, height - 60, width, 60, fill=1, stroke=0)
                 pdf.setFont("Helvetica-Bold", 16)
@@ -527,12 +525,15 @@ def send_matching_pdf(request, property_id):
                 pdf.drawString(110, height - 52, "Thrissur, Kerala")
                 pdf.drawRightString(width - 40, height - 40, "9846845777 | 9645129777")
                 pdf.drawRightString(width - 40, height - 52, "info@devlokdevelopers.com | www.devlokdevelopers.com")
-                y -= 90
+                y = height - 130
                 pdf.setFont("Helvetica", 10)
                 pdf.setFillColor(colors.black)
 
+            box_top = y
+            pdf.setStrokeColor(colors.HexColor("#2E86C1"))
+            pdf.setLineWidth(1)
             pdf.setFont("Helvetica-Bold", 12)
-            pdf.drawString(50, y, f"Match #{idx} (Score: {score})")
+            pdf.drawString(80, y, f"Match #{idx} (Score: {score})")
             y -= 20
 
             pdf.setFont("Helvetica", 10)
@@ -546,25 +547,29 @@ def send_matching_pdf(request, property_id):
                 f"Purpose: {match.purpose or 'N/A'}",
             ]
             for line in lines:
-                pdf.drawString(60, y, line)
+                pdf.drawString(100, y, line)
                 y -= 15
 
-            # Include image if exists
+            # Show images
             images = match.images.all()
-            if images:
-                image_path = images[0].image.path
+            for image_obj in images:
+                image_path = image_obj.image.path
                 if os.path.exists(image_path):
                     try:
-                        img = ImageReader(image_path)
-                        if y < 180:
+                        if y < 200:
                             pdf.showPage()
                             draw_watermark(pdf)
-                            y = height - 50
-                        pdf.drawImage(img, 60, y - 120, width=180, height=120, preserveAspectRatio=True)
+                            y = height - 120
+                        img = ImageReader(image_path)
+                        pdf.drawImage(img, width / 2 - 90, y - 120, width=180, height=120, preserveAspectRatio=True)
                         y -= 140
                     except Exception:
                         y -= 10
-            y -= 10  # Spacer
+
+            # Border box for property
+            box_bottom = y
+            pdf.rect(70, box_bottom, width - 140, box_top - box_bottom)
+            y -= 20
 
         # Footer
         pdf.setFont("Helvetica-Oblique", 8)
