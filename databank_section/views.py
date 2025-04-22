@@ -490,7 +490,7 @@ def send_matching_pdf(request, property_id):
 
         header_table = Table(header_data, colWidths=[60, 400])
         header_table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor("#003366")),
+            ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor("#0564BC")),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
             ('ALIGN', (1, 0), (1, 0), 'CENTER'),
             ('LEFTPADDING', (0, 0), (-1, -1), 10),
@@ -534,7 +534,7 @@ def send_matching_pdf(request, property_id):
                     
                     # Ensure the file exists at the specified location
                     if os.path.exists(img_path):
-                        img = Image(img_path, width=3*inch, height=2*inch)
+                        img = Image(img_path, width=5*inch, height=5*inch)
                         img.hAlign = 'LEFT'
                         content.append(img)
                         content.append(Spacer(1, 6))
