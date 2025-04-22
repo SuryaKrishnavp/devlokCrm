@@ -171,8 +171,7 @@ CORS_ALLOWED_ORIGINS = [
 CSRF_TRUSTED_ORIGINS = [
     "https://devlokcrmfrontend.vercel.app/",
     "https://devlokcrm-production.up.railway.app",
-    "http://127.0.0.1:5173",
-    "http://localhost:5173",
+    
 ]
 
 CSRF_COOKIE_NAME = "csrftoken"
