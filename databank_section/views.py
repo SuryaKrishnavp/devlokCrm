@@ -28,7 +28,8 @@ from leads_section.models import Leads
 import os
 from reportlab.lib import colors
 from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import pagesizes
 from django.core.files.images import ImageFile
 from reportlab.lib.units import inch
@@ -458,75 +459,63 @@ def send_matching_pdf(request, property_id):
 
         # === PDF Generation ===
         buffer = BytesIO()
-        pdf = canvas.Canvas(buffer, pagesize=A4)
-        width, height = A4
-        y = height - 50
+        doc = SimpleDocTemplate(buffer, pagesize=A4)
+
+        # === Styles ===
+        styles = getSampleStyleSheet()
+        header_style = styles['Heading1']
+        paragraph_style = styles['BodyText']
+        paragraph_style.fontName = "Helvetica"
+        paragraph_style.fontSize = 10
+        paragraph_style.leading = 14
+
+        # === Building PDF Content ===
+        content = []
 
         # === Header ===
-        pdf.setFont("Helvetica-Bold", 16)
-        pdf.drawString(100, y, "DEVELOK DEVELOPERS")
-        y -= 20
-        pdf.setFont("Helvetica", 10)
-        pdf.drawString(100, y, "Thrissur, Kerala")
-        y -= 15
-        pdf.drawString(100, y, "9846845777 | 9645129777")
-        y -= 15
-        pdf.drawString(100, y, "info@devlokdevelopers.com | www.devlokdevelopers.com")
-        y -= 25
+        header = Paragraph("<b>DEVELOK DEVELOPERS</b>", header_style)
+        contact_info = Paragraph("Thrissur, Kerala | 9846845777 | 9645129777 | info@devlokdevelopers.com | www.devlokdevelopers.com", paragraph_style)
+        content.append(header)
+        content.append(contact_info)
+        content.append(Spacer(1, 12))
 
         # === Paragraph Introduction ===
-        pdf.setFont("Helvetica", 12)
-        pdf.setFillColor(colors.grey)
-        paragraph = "At DEVELOK DEVELOPERS, we are committed to helping you find the property of your dreams. Our advanced matching engine suggests the best properties tailored to your needs. Let us help you turn your dream into reality."
-        pdf.drawString(100, y, paragraph)
-        y -= 40
+        paragraph = Paragraph(
+            "At <b>DEVELOK DEVELOPERS</b>, we are committed to helping you find the property of your dreams. Our advanced matching engine suggests the best properties tailored to your needs. Let us help you turn your dream into reality.",
+            paragraph_style
+        )
+        content.append(paragraph)
+        content.append(Spacer(1, 20))
 
         # === Watermark ===
-        pdf.setFont("Helvetica-Bold", 80)
-        pdf.setFillColor(colors.grey, alpha=0.1)
-        pdf.rotate(45)
-        pdf.drawString(150, 300, "DEVELOK DEVELOPERS")
-        pdf.rotate(-45)
+        watermark_text = Paragraph("<font size=100><i>DEVELOK DEVELOPERS</i></font>", paragraph_style)
+        watermark_text._setTextOrigin(150, 350)
+        content.append(watermark_text)
 
-        # === Border ===
-        pdf.setStrokeColor(colors.black)
-        pdf.setLineWidth(1)
-        pdf.rect(20, 20, width - 40, height - 40)
+        # === Matching Properties Header ===
+        matching_properties_header = Paragraph("<b>Top Matching Properties</b>", header_style)
+        content.append(matching_properties_header)
+        content.append(Spacer(1, 12))
 
-        pdf.setFont("Helvetica-Bold", 14)
-        pdf.drawString(100, y, "Top Matching Properties")
-        y -= 30
-
+        # === Property Listings ===
         for score, match in ranked_matches[:5]:
-            if y < 200:
-                pdf.showPage()
-                y = height - 50
-
-            pdf.setFont("Helvetica", 10)
-            pdf.drawString(50, y, f"District: {match.district} | Place: {match.place} | Price: ₹{match.demand_price} | Area: {match.area_in_sqft} sqft | BHK: {match.building_bhk or 'N/A'} | Roof: {match.building_roof or 'N/A'}")
-            y -= 20
-
-            images = match.images.all()
-            for image_obj in images:
-                try:
-                    img = ImageReader(image_obj.image.file)
-                    if y < 170:
-                        pdf.showPage()
-                        y = height - 50
-                    pdf.drawImage(img, 50, y - 120, width=200, height=120, preserveAspectRatio=True)
-                    y -= 140
-                except Exception as e:
-                    print(f"Error rendering image: {e}")
-                    y -= 10
+            property_info = Paragraph(
+                f"<font size=12>District: {match.district} | Place: {match.place} | Price: ₹{match.demand_price} | Area: {match.area_in_sqft} sqft | BHK: {match.building_bhk or 'N/A'} | Roof: {match.building_roof or 'N/A'}</font>", 
+                paragraph_style
+            )
+            content.append(property_info)
+            content.append(Spacer(1, 10))
 
         # === Footer ===
-        pdf.setFont("Helvetica", 8)
-        pdf.setFillColor(colors.grey)
-        footer_text = "Generated by DEVELOK DEVELOPERS Matching Detection Engine"
-        pdf.drawString(100, 30, footer_text)
+        footer = Paragraph("<font size=8>Generated by <b>DEVELOK DEVELOPERS Matching Detection Engine</b></font>", paragraph_style)
+        content.append(Spacer(1, 30))
+        content.append(footer)
 
-        pdf.save()
+        # Build PDF
+        doc.build(content)
+
         buffer.seek(0)
+
 
         # === Email with PDF attachment ===
         subject = f"Matching Properties PDF for Property ID {property_id}"
