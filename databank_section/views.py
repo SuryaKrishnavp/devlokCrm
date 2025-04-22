@@ -37,6 +37,7 @@ from reportlab.platypus import Image as RLImage
 from reportlab.lib.enums import TA_CENTER
 from reportlab.platypus import Image
 import requests
+from PIL import Image as PILImage
 
 
 @api_view(['GET'])
@@ -528,14 +529,32 @@ def send_matching_pdf(request, property_id):
             content.append(Spacer(1, 6))
 
             # Add property images (up to 2 images per property)
-            for img_obj in prop.images.all()[:2]:
+            for img_obj in prop.images.all():
                 try:
+                    # Get the image URL
                     image_url = f"https://devlokcrm-production.up.railway.app{img_obj.image.url}"
                     response = requests.get(image_url)
+
                     if response.status_code == 200:
+                        # Load image content into a BytesIO buffer
                         img_data = BytesIO(response.content)
-                        img = RLImage(img_data, width=5 * inch, height=3 * inch)
+
+                        # Open image using PIL to check for rotation and fix it if necessary
+                        pil_img = PILImage.open(img_data)
+
+                        # Correct the image orientation (rotate if necessary)
+                        pil_img = pil_img.rotate(0, expand=True)  # Change angle if needed
+
+                        # Save the corrected image back into a BytesIO buffer
+                        img_corrected_data = BytesIO()
+                        pil_img.save(img_corrected_data, format='JPEG')
+                        img_corrected_data.seek(0)  # Rewind buffer to start
+
+                        # Use the corrected image for the PDF
+                        img = RLImage(img_corrected_data, width=5 * inch, height=3 * inch)
                         img.hAlign = 'LEFT'
+
+                        # Append image to the PDF content
                         content.append(img)
                         content.append(Spacer(1, 6))
                     else:
