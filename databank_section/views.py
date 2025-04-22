@@ -28,12 +28,12 @@ from leads_section.models import Leads
 import os
 from reportlab.lib import colors
 from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import pagesizes
 from django.core.files.images import ImageFile
 from reportlab.lib.units import inch
-
+from reportlab.platypus import Image
 
 
 @api_view(['GET'])
@@ -459,79 +459,69 @@ def send_matching_pdf(request, property_id):
 
         # === PDF Generation ===
         buffer = BytesIO()
-        doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=36, leftMargin=36, topMargin=36, bottomMargin=36)
-
+        doc = SimpleDocTemplate(buffer, pagesize=A4, topMargin=50, bottomMargin=50, leftMargin=40, rightMargin=40)
         styles = getSampleStyleSheet()
-        header_style = styles['Heading1']
-        paragraph_style = styles['BodyText']
-
-        # Custom styles
-        paragraph_style.fontName = "Helvetica"
-        paragraph_style.fontSize = 10
-        paragraph_style.leading = 14
-
-        header_style.alignment = 1  # Centered
-
         content = []
 
-        # === Header ===
-        header = Paragraph("<b>DEVELOK DEVELOPERS</b>", header_style)
-        contact_info = Paragraph(
-            "<font size=9 color='grey'>Thrissur, Kerala | 9846845777 | 9645129777 | info@devlokdevelopers.com | www.devlokdevelopers.com</font>",
-            paragraph_style
-        )
-        content.append(header)
-        content.append(contact_info)
+        # Custom styles
+        title_style = styles['Heading1']
+        title_style.fontSize = 16
+        title_style.alignment = 1
+        normal_style = ParagraphStyle(name='Normal', fontSize=10, leading=14)
+        footer_style = ParagraphStyle(name='Footer', fontSize=8, textColor=colors.grey, alignment=1)
+
+        # Header
+        content.append(Paragraph("<b>DEVELOK DEVELOPERS</b><br/>Thrissur, Kerala<br/>9846845777 | 9645129777<br/>info@devlokdevelopers.com | www.devlokdevelopers.com", title_style))
         content.append(Spacer(1, 12))
 
-        # === Intro Paragraph ===
-        intro = Paragraph(
-            "We are committed to helping you find the property of your dreams. Our advanced matching engine suggests the best properties tailored to your needs. Let us help you turn your dream into reality.",
-            paragraph_style
+        # Intro
+        intro = (
+            "We are excited to present a curated list of properties that closely match your preferences. "
+            "Here are our top picks based on your recent property entry:"
         )
-        content.append(intro)
+        content.append(Paragraph(intro, normal_style))
         content.append(Spacer(1, 20))
 
-        # === Matching Properties Header ===
-        matches_header = Paragraph("<b>Top Matching Properties</b>", styles['Heading2'])
-        content.append(matches_header)
-        content.append(Spacer(1, 10))
+        # Matching Properties
+        for score, prop in ranked_matches[:5]:
+            details = f"""
+            <b>District:</b> {prop.district} &nbsp;&nbsp; <b>Place:</b> {prop.place}<br/>
+            <b>Purpose:</b> {prop.purpose} &nbsp;&nbsp; <b>Type:</b> {prop.mode_of_property}<br/>
+            <b>Price:</b> ₹{prop.demand_price} &nbsp;&nbsp; <b>Area:</b> {prop.area_in_sqft} sqft<br/>
+            <b>BHK:</b> {prop.building_bhk or 'N/A'} &nbsp;&nbsp; <b>Floors:</b> {prop.number_of_floors or 'N/A'}<br/>
+            <b>Roof Type:</b> {prop.building_roof or 'N/A'}<br/>
+            <b>Additional Notes:</b> {prop.additional_note or 'None'}
+            """
+            content.append(Paragraph(details, normal_style))
+            content.append(Spacer(1, 6))
 
-        # === Table for Matching Properties ===
-        table_data = [[
-            'District', 'Place', 'Price (₹)', 'Area (sqft)', 'BHK', 'Roof'
-        ]]
+            for img_obj in prop.images.all()[:2]:
+                try:
+                    img = Image(img_obj.image.path, width=3*inch, height=2*inch)
+                    img.hAlign = 'LEFT'
+                    content.append(img)
+                    content.append(Spacer(1, 6))
+                except Exception as e:
+                    print(f"Image Error: {e}")
 
-        for score, match in ranked_matches[:5]:
-            table_data.append([
-                match.district or '-',
-                match.place or '-',
-                f"{match.demand_price:,}" if match.demand_price else '-',
-                match.area_in_sqft or '-',
-                match.building_bhk or '-',
-                match.building_roof or '-'
-            ])
+            content.append(Spacer(1, 12))
+            content.append(Table([[" " * 150]], style=[("LINEBELOW", (0, 0), (-1, -1), 0.5, colors.grey)]))
+            content.append(Spacer(1, 12))
 
-        property_table = Table(table_data, hAlign='LEFT', colWidths=[70, 70, 70, 60, 40, 60])
-        property_table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#d3d3d3')),
-            ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
-            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
-            ('FONTSIZE', (0, 0), (-1, -1), 9),
-            ('BOTTOMPADDING', (0, 0), (-1, 0), 6),
-            ('BACKGROUND', (0, 1), (-1, -1), colors.white),
-            ('GRID', (0, 0), (-1, -1), 0.25, colors.black),
-        ]))
-        content.append(property_table)
-        content.append(Spacer(1, 20))
+        content.append(PageBreak())
+        content.append(Spacer(1, 50))
+        content.append(Paragraph("Generated by <b>DEVELOK DEVELOPERS Matching Engine</b>", footer_style))
 
-        # === Footer ===
-        footer = Paragraph("<font size=8>Generated by <b>DEVELOK DEVELOPERS Matching Engine</b></font>", paragraph_style)
-        content.append(Spacer(1, 30))
-        content.append(footer)
+        def add_watermark(canvas, doc):
+            canvas.saveState()
+            canvas.setFont('Helvetica-Bold', 60)
+            canvas.setFillColorRGB(0.9, 0.9, 0.9, alpha=0.2)
+            canvas.translate(300, 400)
+            canvas.rotate(45)
+            canvas.drawCentredString(0, 0, "DEVELOK DEVELOPERS")
+            canvas.restoreState()
 
-        # === Build PDF ===
-        doc.build(content)
+        doc.build(content, onFirstPage=add_watermark, onLaterPages=add_watermark)
         buffer.seek(0)
 
 
