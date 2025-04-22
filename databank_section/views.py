@@ -36,6 +36,7 @@ from reportlab.lib.units import inch
 from reportlab.platypus import Image as RLImage
 from reportlab.lib.enums import TA_CENTER
 from reportlab.platypus import Image
+import requests
 
 
 @api_view(['GET'])
@@ -488,7 +489,7 @@ def send_matching_pdf(request, property_id):
             Paragraph("<b>DEVELOK DEVELOPERS</b><br/>Thrissur, Kerala<br/> 9846845777 | 9645129777<br/> info@devlokdevelopers.com |  www.devlokdevelopers.com", header_sub_style)
         ]]
 
-        header_table = Table(header_data, colWidths=[60, 400])
+        header_table = Table(header_data, colWidths=[60, 450])
         header_table.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor("#0564BC")),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
@@ -529,19 +530,18 @@ def send_matching_pdf(request, property_id):
             # Add property images (up to 2 images per property)
             for img_obj in prop.images.all()[:2]:
                 try:
-        # Construct the correct path to the image
-                    img_path = os.path.join(settings.MEDIA_ROOT, img_obj.image.name)
-                    
-                    # Ensure the file exists at the specified location
-                    if os.path.exists(img_path):
-                        img = Image(img_path, width=5*inch, height=5*inch)
+                    image_url = f"https://devlokcrm-production.up.railway.app{img_obj.image.url}"
+                    response = requests.get(image_url)
+                    if response.status_code == 200:
+                        img_data = BytesIO(response.content)
+                        img = RLImage(img_data, width=5 * inch, height=3 * inch)
                         img.hAlign = 'LEFT'
                         content.append(img)
                         content.append(Spacer(1, 6))
                     else:
-                        print(f"Image not found at {img_path}")
+                        print(f"Failed to load image: {image_url} (status code: {response.status_code})")
                 except Exception as e:
-                    print(f"Image Error: {e}")
+                    print(f"Image loading error: {e}")
 
             content.append(Spacer(1, 12))
             content.append(Table([[" " * 150]], style=[("LINEBELOW", (0, 0), (-1, -1), 0.5, colors.grey)]))
