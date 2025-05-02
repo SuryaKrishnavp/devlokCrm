@@ -301,12 +301,12 @@ def SalesManager_WorkHistory(request, salesmanager_id):
 
     # Count leads by their categories
     total_followed = leads.count()
-    data_saved = leads.filter(stage="Data saved").count()
+    data_saved = leads.filter(stage="Data Saved").count()
     closed_successfully = leads.filter(stage="Closed Successfully").count()
     closed_by_someone = leads.filter(stage="Closed by Someone").count()
     dropped_leads = leads.filter(stage="Droped lead").count()
     pending_to_close = leads.exclude(
-        stage__in=["Data saved", "Closed Successfully", "Closed by Someone", "Droped lead"]
+        stage__in=["Data Saved", "Closed Successfully", "Closed by Someone", "Droped lead"]
     ).count()
 
     # Calculate Lead Conversion Rate
@@ -350,12 +350,12 @@ def Personal_workhistory(request):
 
     # Count leads by their categories
     total_followed = leads.count()
-    data_saved = leads.filter(stage="Data saved").count()
+    data_saved = leads.filter(stage="Data Saved").count()
     closed_successfully = leads.filter(stage="Closed Successfully").count()
     closed_by_someone = leads.filter(stage="Closed by Someone").count()
     dropped_leads = leads.filter(stage="Droped lead").count()
     pending_to_close = leads.exclude(
-        stage__in=["Data saved", "Closed Successfully", "Closed by Someone", "Droped lead"]
+        stage__in=["Data Saved", "Closed Successfully", "Closed by Someone", "Droped lead"]
     ).count()
 
     # Calculate Lead Conversion Rate
@@ -403,7 +403,7 @@ def CRM_performance_graph(request):
     closed_by_someone = Leads.objects.filter(stage="Closed by Someone").count()
     dropped_leads = Leads.objects.filter(stage="Droped lead").count()
     pending_to_close = Leads.objects.exclude(
-        stage__in=["Data saved", "Closed Successfully", "Closed by Someone", "Droped lead"]
+        stage__in=["Data Saved", "Closed Successfully", "Closed by Someone", "Droped lead"]
     ).count()
 
     # Calculate Lead Conversion Rate
@@ -510,12 +510,12 @@ def Admin_Salesmanager_workhistory(request,staff_id):
 
     # Count leads by their categories
     total_followed = leads.count()
-    data_saved = leads.filter(stage="Data saved").count()
+    data_saved = leads.filter(stage="Data Saved").count()
     closed_successfully = leads.filter(stage="Closed Successfully").count()
     closed_by_someone = leads.filter(stage="Closed by Someone").count()
     dropped_leads = leads.filter(stage="Droped lead").count()
     pending_to_close = leads.exclude(
-        stage__in=["Data saved", "Closed Successfully", "Closed by Someone", "Droped lead"]
+        stage__in=["Data Saved", "Closed Successfully", "Closed by Someone", "Droped lead"]
     ).count()
 
     # Calculate Lead Conversion Rate
