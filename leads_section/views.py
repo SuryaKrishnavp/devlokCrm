@@ -2,7 +2,7 @@ from django.shortcuts import render
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
-from .models import Leads
+from .models import Leads,LeadCategory
 from django.utils import timezone
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
@@ -869,3 +869,29 @@ def Delete_lead(request,lead_id):
     lead = Leads.objects.filter(id=lead_id).first()
     lead.delete()
     return Response({'message':"lead deleted successfully"})
+
+
+
+
+
+
+
+
+@api_view(['GET'])  # Changed to GET since we're retrieving data
+@permission_classes([IsAuthenticated,IsCustomAdminUser])
+def lead_category_graph(request):
+    admin_user = request.user
+
+    # Check if the user has the admin profile
+    if not hasattr(admin_user, 'admin_reg'):
+        return Response({'error': 'Admin authentication required'}, status=status.HTTP_403_FORBIDDEN)
+
+    # Count how many leads belong to each category
+    category_counts = (
+        LeadCategory.objects
+        .values('category')
+        .annotate(count=Count('id'))
+        .order_by('-count')
+    )
+
+    return Response(category_counts)
