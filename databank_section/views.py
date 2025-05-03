@@ -179,6 +179,29 @@ def delete_databank(request, databank_id):
     return Response({"message": "DataBank entry deleted successfully"}, status=200)
 
 
+@api_view(['GET'])
+@permission_classes([IsAuthenticated, IsCustomAdminUser])
+def autocomplete_databank(request):
+    query = request.GET.get('q', '').strip()
+    if len(query) < 2:
+        return JsonResponse({"suggestions": []})
+
+    matches = DataBank.objects.filter(
+        Q(name__icontains=query) |
+        Q(district__icontains=query) |
+        Q(place__icontains=query)
+    ).values_list('name', 'district', 'place')
+
+    suggestions = set()
+    for name, district, place in matches:
+        if name and query.lower() in name.lower():
+            suggestions.add(name)
+        if district and query.lower() in district.lower():
+            suggestions.add(district)
+        if place and query.lower() in place.lower():
+            suggestions.add(place)
+
+    return JsonResponse({"suggestions": list(suggestions)})
 
 
 
