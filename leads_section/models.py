@@ -18,3 +18,7 @@ class Leads(models.Model):
     closed_date = models.DateField(null=True,blank=True)
     follower = models.CharField(max_length=100,default="Nil")
     staff_id = models.IntegerField(default=0)
+    
+    
+
+
