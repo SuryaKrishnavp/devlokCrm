@@ -402,7 +402,7 @@ def filter_data_banks(request):
 
     # Read parameters
     district = request.GET.get('district')
-    place = request.GET.get('place')
+    place = request.GET.get('location')
     distance_km = request.GET.get('distance_km')
 
     # Try geocoding if a place or district is provided for distance filtering
