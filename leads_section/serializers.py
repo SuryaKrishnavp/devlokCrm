@@ -1,7 +1,21 @@
-from .models import Leads
+from .models import Leads,LeadCategory
 from rest_framework import serializers
 from auth_section.models import Sales_manager_reg
+
+
+
+
+
+
+class LeadCategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = LeadCategory
+        fields = "__all__"
+
+
+
 class LeadsViewSerializer(serializers.ModelSerializer):
+    lead_category = LeadCategorySerializer(many=True, read_only=True)
     follower_name = serializers.SerializerMethodField()
 
     class Meta:
