@@ -372,10 +372,13 @@ def get_coordinates(place_name):
 def extract_coordinates(link):
     if not link:
         return None
-    match = re.search(r'@([-.\d]+),([-.\d]+)', link) or re.search(r'[?&]q=([-.\d]+),([-.\d]+)', link)
-    if match:
-        return float(match.group(1)), float(match.group(2))
-    return None
+    try:
+        # Split the string by comma to get latitude and longitude
+        lat, lon = map(float, link.split(','))
+        return lat, lon
+    except ValueError:
+        return None
+
 
 # Function to geocode a place using Geopy (Nominatim)
 def geocode_location(place_name):
@@ -396,7 +399,7 @@ def filter_data_banks(request):
     place = request.GET.get('place')
     distance_km = request.GET.get('distance_km')
 
-    # Check if distance filtering is requested
+    # Try geocoding if a place or district is provided for distance filtering
     if distance_km and (place or district):
         try:
             distance_km = float(distance_km)
@@ -419,15 +422,16 @@ def filter_data_banks(request):
                     if dist <= distance_km:
                         filtered_ids.append(obj.id)
 
-            # Apply the filtered IDs
+            # Apply the filtered IDs to the queryset
             filters = filters.filter(id__in=filtered_ids)
 
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-    # Serialize and return
+    # Serialize and return the filtered data
     serializer = DataBankGETSerializer(filters, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 
 
