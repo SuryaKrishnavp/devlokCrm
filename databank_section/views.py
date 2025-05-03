@@ -2,7 +2,7 @@ from django.shortcuts import render
 from rest_framework.decorators import api_view,permission_classes
 from auth_section.permissions import IsSalesManagerUser,IsCustomAdminUser
 from auth_section.models import Sales_manager_reg
-from leads_section.models import Leads
+from leads_section.models import Leads,LeadCategory
 from rest_framework.response import Response
 from .serializers import DatabankSerializer,DataBankEditSerializer,DataBankGETSerializer,DataBankImageSerializer
 from rest_framework import status
@@ -91,12 +91,19 @@ def store_data_into_db(request, lead_id):
     serializer = DatabankSerializer(data=request.data)
 
     if serializer.is_valid():
+        validated_data = serializer.validated_data
+        lead_category_value = validated_data.pop("lead_category", None)
         databank_entry = DataBank.objects.create(
             lead=lead,
             follower=sales_manager,
             timestamp=timezone.now(),
             **serializer.validated_data
         )
+        if lead_category_value:
+            LeadCategory.objects.create(
+                lead=lead,
+                category=lead_category_value
+            )
         return Response({"success": "Data stored successfully", "id": databank_entry.id}, status=status.HTTP_201_CREATED)
 
     print("Validation errors:", serializer.errors)  # ✅ Show why it failed
