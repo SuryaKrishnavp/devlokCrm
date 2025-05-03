@@ -40,6 +40,8 @@ import requests
 from PIL import Image as PILImage
 from geopy.geocoders import Nominatim
 from geopy.distance import geodesic
+import re
+
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated,IsSalesManagerUser])
@@ -363,16 +365,68 @@ def get_coordinates(place_name):
         print("Geocoding error:", e)
     return None
 
+
+
+
+
+def extract_coordinates(link):
+    if not link:
+        return None
+    match = re.search(r'@([-.\d]+),([-.\d]+)', link) or re.search(r'[?&]q=([-.\d]+),([-.\d]+)', link)
+    if match:
+        return float(match.group(1)), float(match.group(2))
+    return None
+
+# Function to geocode a place using Geopy (Nominatim)
+def geocode_location(place_name):
+    geolocator = Nominatim(user_agent="realestate-app")
+    location = geolocator.geocode(place_name)
+    return (location.latitude, location.longitude) if location else None
+
+
+
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def filter_data_banks(request):
-    
-    # Apply filters
-    filtered_data = DataBankFilter(request.GET, queryset=DataBank.objects.all()).qs
-    
-    # Serialize filtered results
-    serializer = DataBankGETSerializer(filtered_data, many=True)
-    
+    queryset = DataBank.objects.all()
+    filters = DataBankFilter(request.GET, queryset=queryset).qs
+
+    # Read parameters
+    district = request.GET.get('district')
+    place = request.GET.get('place')
+    distance_km = request.GET.get('distance_km')
+
+    # Check if distance filtering is requested
+    if distance_km and (place or district):
+        try:
+            distance_km = float(distance_km)
+
+            # Try geocoding the place first, fallback to district
+            base_coords = None
+            if place:
+                base_coords = geocode_location(place)
+            if not base_coords and district:
+                base_coords = geocode_location(district)
+            if not base_coords:
+                return Response({"error": "Could not geocode the provided place or district."}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Filter by distance (this approach is in memory, can be optimized later)
+            filtered_ids = []
+            for obj in filters:
+                coords = extract_coordinates(obj.location_link)
+                if coords:
+                    dist = geodesic(base_coords, coords).km
+                    if dist <= distance_km:
+                        filtered_ids.append(obj.id)
+
+            # Apply the filtered IDs
+            filters = filters.filter(id__in=filtered_ids)
+
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Serialize and return
+    serializer = DataBankGETSerializer(filters, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 
