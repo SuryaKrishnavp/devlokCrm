@@ -318,6 +318,41 @@ def search_databank(request):
 
 
 @api_view(['GET'])
+@permission_classes([IsAuthenticated, IsSalesManagerUser])
+def autocomplete_databank_salesmanager(request):
+    query = request.GET.get('q', '').strip()
+    if len(query) < 2:
+        return JsonResponse({"suggestions": []})
+
+    staff = request.user
+    salesmanager = Sales_manager_reg.objects.filter(user=staff.id).first()
+    if not salesmanager:
+        return JsonResponse({"error": "Not a valid sales manager"}, status=403)
+
+    # Optimizing query with proper Q filter grouping
+    matches = DataBank.objects.filter(
+        Q(name__icontains=query) | 
+        Q(district__icontains=query) | 
+        Q(place__icontains=query),
+        follower=salesmanager
+    ).values_list('name', 'district', 'place')
+
+    suggestions = set()
+    for name, district, place in matches:
+        if name:
+            suggestions.add(name)
+        if district:
+            suggestions.add(district)
+        if place:
+            suggestions.add(place)
+
+    return JsonResponse({"suggestions": list(suggestions)})
+
+
+
+
+
+@api_view(['GET'])
 @permission_classes([IsAuthenticated,IsSalesManagerUser])
 def salesmanager_search_databank(request):
     query = request.GET.get('q', '').strip()
