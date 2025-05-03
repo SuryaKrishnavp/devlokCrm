@@ -39,6 +39,7 @@ from reportlab.platypus import Image
 import requests
 from PIL import Image as PILImage
 from geopy.geocoders import Nominatim
+from opencage.geocoder import OpenCageGeocode
 from geopy.distance import geodesic
 import re
 
@@ -379,15 +380,17 @@ def extract_coordinates(link):
     except ValueError:
         return None
 
-
+OPENCAGE_API_KEY = '92968afb77be497ba37ea4fb6ceba77b'  # Replace with your real API key
+geocoder = OpenCageGeocode(OPENCAGE_API_KEY)
 # Function to geocode a place using Geopy (Nominatim)
-geolocator = Nominatim(user_agent="realestate-app")
-
 def geocode_location(place_name):
     try:
-        location = geolocator.geocode(f"{place_name}, Kerala, India")
-        if location:
-            return (location.latitude, location.longitude)
+        query = f"{place_name}, Kerala, India"
+        results = geocoder.geocode(query)
+        if results and len(results):
+            lat = results[0]['geometry']['lat']
+            lng = results[0]['geometry']['lng']
+            return (lat, lng)
         else:
             print(f"Location not found for: {place_name}")
     except Exception as e:
@@ -400,12 +403,10 @@ def filter_data_banks(request):
     queryset = DataBank.objects.all()
     filters = DataBankFilter(request.GET, queryset=queryset).qs
 
-    # Read parameters
     district = request.GET.get('district')
     place = request.GET.get('location')
     distance_km = request.GET.get('distance_km')
 
-    # Try geocoding if a place or district is provided for distance filtering
     if distance_km and (place or district):
         try:
             distance_km = float(distance_km)
@@ -419,7 +420,6 @@ def filter_data_banks(request):
             if not base_coords:
                 return Response({"error": "Could not geocode the provided place or district."}, status=status.HTTP_400_BAD_REQUEST)
 
-            # Filter by distance (this approach is in memory, can be optimized later)
             filtered_ids = []
             for obj in filters:
                 coords = extract_coordinates(obj.location_link)
@@ -428,16 +428,13 @@ def filter_data_banks(request):
                     if dist <= distance_km:
                         filtered_ids.append(obj.id)
 
-            # Apply the filtered IDs to the queryset
             filters = filters.filter(id__in=filtered_ids)
 
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-    # Serialize and return the filtered data
     serializer = DataBankGETSerializer(filters, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
-
 
 
 
