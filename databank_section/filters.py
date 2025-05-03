@@ -14,7 +14,7 @@ class DataBankFilter(django_filters.FilterSet):
     timestamp = django_filters.DateFromToRangeFilter()  # Allows filtering by date range
     area_in_sqft_min = django_filters.NumberFilter(field_name="area_in_sqft", lookup_expr='gte')
     area_in_sqft_max = django_filters.NumberFilter(field_name="area_in_sqft", lookup_expr='lte')
-
+    lead_category = django_filters.CharFilter(lookup_expr='icontains')
     building_roof = django_filters.CharFilter(lookup_expr='icontains')
     number_of_floors_min = django_filters.NumberFilter(field_name="number_of_floors", lookup_expr='gte')
     number_of_floors_max = django_filters.NumberFilter(field_name="number_of_floors", lookup_expr='lte')
