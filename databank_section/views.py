@@ -182,6 +182,32 @@ def delete_databank(request, databank_id):
 
 
 
+@api_view(['GET'])
+@permission_classes([IsAuthenticated, IsCustomAdminUser])
+def databank_suggestions(request):
+    query = request.GET.get("q", "").strip()
+    suggestions = set()
+
+    if not query:
+        return Response({"suggestions": []})
+
+    matching_items = DataBank.objects.filter(
+        Q(name__icontains=query) |
+        Q(district__icontains=query) |
+        Q(place__icontains=query)
+    ).values_list("name", "district", "place")
+
+    for name, district, place in matching_items:
+        if name and query.lower() in name.lower():
+            suggestions.add(name)
+        if district and query.lower() in district.lower():
+            suggestions.add(district)
+        if place and query.lower() in place.lower():
+            suggestions.add(place)
+
+    return Response({"suggestions": list(suggestions)[:10]})  # limit to top 10
+
+
 from leads_section.serializers import LeadsViewSerializer
 from project_section.serializers import ProjectSerializer
 
