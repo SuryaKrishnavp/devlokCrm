@@ -329,7 +329,7 @@ def autocomplete_databank_salesmanager(request):
     if not salesmanager:
         return JsonResponse({"error": "Not a valid sales manager"}, status=403)
 
-    # Optimizing query with proper Q filter grouping
+    # Filter DataBank records where any field contains the query string (name, district, place)
     matches = DataBank.objects.filter(
         Q(name__icontains=query) | 
         Q(district__icontains=query) | 
@@ -338,12 +338,14 @@ def autocomplete_databank_salesmanager(request):
     ).values_list('name', 'district', 'place')
 
     suggestions = set()
+
     for name, district, place in matches:
-        if name:
+        # Add only the parts that contain the query string
+        if name and query.lower() in name.lower():
             suggestions.add(name)
-        if district:
+        if district and query.lower() in district.lower():
             suggestions.add(district)
-        if place:
+        if place and query.lower() in place.lower():
             suggestions.add(place)
 
     return JsonResponse({"suggestions": list(suggestions)})
