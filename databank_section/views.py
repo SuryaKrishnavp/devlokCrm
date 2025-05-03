@@ -38,7 +38,8 @@ from reportlab.lib.enums import TA_CENTER
 from reportlab.platypus import Image
 import requests
 from PIL import Image as PILImage
-
+from geopy.geocoders import Nominatim
+from geopy.distance import geodesic
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated,IsSalesManagerUser])
@@ -347,6 +348,21 @@ def salesmanager_search_databank(request):
 
 
 
+
+
+
+
+geolocator = Nominatim(user_agent="devlok-matcher")
+
+def get_coordinates(place_name):
+    try:
+        location = geolocator.geocode(f"{place_name}, Kerala, India")
+        if location:
+            return (location.latitude, location.longitude)
+    except Exception as e:
+        print("Geocoding error:", e)
+    return None
+
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def filter_data_banks(request):
@@ -617,7 +633,6 @@ def match_property(request, property_id):
     try:
         new_property = get_object_or_404(DataBank, id=property_id)
 
-        # Define opposite purpose for matching
         opposite_purpose_map = {
             "For Selling a Property": "For Buying a Property",
             "For Buying a Property": "For Selling a Property",
@@ -626,54 +641,60 @@ def match_property(request, property_id):
         }
         opposite_purpose = opposite_purpose_map.get(new_property.purpose, None)
 
-        # Get potential matches
         potential_matches = DataBank.objects.filter(
             purpose=opposite_purpose,
             mode_of_property=new_property.mode_of_property,
         )
 
-        # Relaxed Matching for Broader Results
         if not potential_matches.exists():
             potential_matches = DataBank.objects.filter(
                 purpose=opposite_purpose,
                 mode_of_property__in=["other", new_property.mode_of_property],
             )
 
-        # Ranking Logic for Best Matches
+        new_coords = get_coordinates(
+            new_property.location_proposal_place if new_property.purpose in ["buy", "rental seeker"]
+            else new_property.place
+        )
+
         ranked_matches = []
         for match in potential_matches:
             score = 0
 
-            # Strong Matches - Property Type
             if match.mode_of_property == new_property.mode_of_property:
                 score += 4
 
-            # Location Matching Logic (District & Place)
+            # District and Place match
             if new_property.purpose in ["buy", "rental seeker"]:
                 if match.district == new_property.location_proposal_district:
                     score += 3
-                if (
-                    match.place
-                    and new_property.location_proposal_place
-                    and match.place.lower() == new_property.location_proposal_place.lower()
-                ):
+                if match.place and new_property.location_proposal_place and match.place.lower() == new_property.location_proposal_place.lower():
                     score += 2
+                match_coords = get_coordinates(match.place)
             else:
                 if match.location_proposal_district == new_property.district:
                     score += 3
-                if (
-                    match.location_proposal_place
-                    and new_property.place
-                    and match.location_proposal_place.lower() == new_property.place.lower()
-                ):
+                if match.location_proposal_place and new_property.place and match.location_proposal_place.lower() == new_property.place.lower():
                     score += 2
+                match_coords = get_coordinates(match.location_proposal_place)
 
-            # Price Range (±10% Flexibility)
+            # Geo Distance Bonus (Closer = Higher Score)
+            if new_coords and match_coords:
+                try:
+                    distance_km = geodesic(new_coords, match_coords).km
+                    if distance_km <= 5:
+                        score += 5
+                    elif distance_km <= 10:
+                        score += 3
+                    elif distance_km <= 20:
+                        score += 1
+                except:
+                    pass
+
             if match.demand_price and new_property.demand_price:
                 if match.demand_price * 0.9 <= new_property.demand_price <= match.demand_price * 1.1:
                     score += 5
 
-            # Area, Floors, and BHK Matching
             if match.area_in_sqft == new_property.area_in_sqft:
                 score += 2
             if match.building_bhk and new_property.building_bhk and match.building_bhk == new_property.building_bhk:
@@ -681,18 +702,14 @@ def match_property(request, property_id):
             if match.number_of_floors and new_property.number_of_floors and match.number_of_floors == new_property.number_of_floors:
                 score += 1
 
-            # Building Roof Check
             if match.building_roof == new_property.building_roof:
                 score += 1
 
-            # Append valid matches with score
             if score > 0:
                 ranked_matches.append((score, match))
 
-        # Sort matches by score in descending order
         ranked_matches.sort(reverse=True, key=lambda x: x[0])
 
-        # Prepare and return results if matches found
         if ranked_matches:
             serialized_matches = [
                 {"score": score, "data": DataBankGETSerializer(match).data}
@@ -700,10 +717,9 @@ def match_property(request, property_id):
             ]
             return Response(
                 {"total_matches": len(ranked_matches), "matches": serialized_matches},
-                status=status.HTTP_200_OK,
+                status=200
             )
 
-        # No Matches Found - Notify Ground-Level Staff
         ground_staff_emails = Ground_level_managers_reg.objects.values_list("email", flat=True)
         if ground_staff_emails:
             subject = "⚠️ No Matches Found for New Property"
@@ -739,11 +755,11 @@ def match_property(request, property_id):
 
         return Response(
             {"message": "⚠️ No matching properties found! Email notification sent to Ground-Level Staff."},
-            status=status.HTTP_200_OK,
+            status=200
         )
 
     except Exception as e:
-        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({"error": str(e)}, status=500)
     
     
     
