@@ -355,13 +355,19 @@ def salesmanager_search_databank(request):
 
 
 
-geolocator = Nominatim(user_agent="devlok-matcher")
+OPENCAGE_API_KEY = 'c445fce3f1b14cba8c08daafb182d5f3'  # Replace with your actual API key
+geocoder = OpenCageGeocode(OPENCAGE_API_KEY)
 
 def get_coordinates(place_name):
     try:
-        location = geolocator.geocode(f"{place_name}, Kerala, India")
-        if location:
-            return (location.latitude, location.longitude)
+        query = f"{place_name}, Kerala, India"
+        results = geocoder.geocode(query)
+        if results and len(results):
+            lat = results[0]['geometry']['lat']
+            lng = results[0]['geometry']['lng']
+            return (lat, lng)
+        else:
+            print(f"Location not found for: {place_name}")
     except Exception as e:
         print("Geocoding error:", e)
     return None
@@ -380,7 +386,7 @@ def extract_coordinates(link):
     except ValueError:
         return None
 
-OPENCAGE_API_KEY = '92968afb77be497ba37ea4fb6ceba77b'  # Replace with your real API key
+OPENCAGE_API_KEY = 'c445fce3f1b14cba8c08daafb182d5f3'  # Replace with your real API key
 geocoder = OpenCageGeocode(OPENCAGE_API_KEY)
 # Function to geocode a place using Geopy (Nominatim)
 def geocode_location(place_name):
