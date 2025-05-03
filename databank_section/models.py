@@ -30,7 +30,7 @@ class DataBank(models.Model):
     building_bhk = models.IntegerField(null=True,blank=True)
     additional_note = models.CharField(max_length=250,null=True,blank=True)
     follower = models.ForeignKey(Sales_manager_reg,on_delete=models.CASCADE)
-    location_link = models.URLField(max_length=500, null=True, blank=True)
+    location_link = models.CharField(max_length=500, null=True, blank=True)
     
     
     
