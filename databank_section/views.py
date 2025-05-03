@@ -381,12 +381,18 @@ def extract_coordinates(link):
 
 
 # Function to geocode a place using Geopy (Nominatim)
+geolocator = Nominatim(user_agent="realestate-app")
+
 def geocode_location(place_name):
-    geolocator = Nominatim(user_agent="realestate-app")
-    location = geolocator.geocode(place_name)
-    return (location.latitude, location.longitude) if location else None
-
-
+    try:
+        location = geolocator.geocode(f"{place_name}, Kerala, India")
+        if location:
+            return (location.latitude, location.longitude)
+        else:
+            print(f"Location not found for: {place_name}")
+    except Exception as e:
+        print("Geocoding error:", e)
+    return None
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
