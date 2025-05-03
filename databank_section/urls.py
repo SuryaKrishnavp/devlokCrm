@@ -43,7 +43,7 @@ urlpatterns = [
     path('send_matching_pdf/<int:property_id>/',send_matching_pdf,name="sendmatchingpdf"),
     path("suggestions_admin/", databank_suggestions, name="databank_suggestions"),
     path("auto_complete_search_admin/",autocomplete_databank,name="autocomplete"),
-    path("salesMSearchAutoComplete",autocomplete_databank_salesmanager,name="salesMAutoComplete")
+    path("salesMSearchAutoComplete/",autocomplete_databank_salesmanager,name="salesMAutoComplete")
 
     
 ]
