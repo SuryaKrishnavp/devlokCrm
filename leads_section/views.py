@@ -895,3 +895,33 @@ def lead_category_graph(request):
     )
 
     return Response(category_counts)
+
+
+
+
+
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated, IsCustomAdminUser])
+def lead_category_current_month(request):
+    admin_user = request.user
+
+    if not hasattr(admin_user, 'admin_reg'):
+        return Response({'error': 'Admin authentication required'}, status=status.HTTP_403_FORBIDDEN)
+
+    today = now().date()
+    first_day_of_month = today.replace(day=1)
+
+    monthly_data = (
+        LeadCategory.objects
+        .filter(timestamp__date__gte=first_day_of_month)
+        .values('category')
+        .annotate(count=Count('id'))
+        .order_by('-count')
+    )
+
+    return Response({
+        'month': first_day_of_month.strftime('%Y-%m'),
+        'data': monthly_data
+    })

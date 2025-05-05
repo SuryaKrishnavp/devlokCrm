@@ -8,7 +8,7 @@ from .views import (receive_form_submission,view_leads,Follow_lead,
                     unsuccessfully_closed_leads_salesmanager,pending_leads_salesmanager,get_pending_leads,
                     get_followedleads_salesmanager,get_unrecorded_salesmanager,salesmanager_crm_performance_graph,
                     salesmanager_crm_graph_Leads,Admin_crm_performance_graph,Admin_crm_graph_Leads,followed_leads_admin,
-                    unrecorded_leads_admin,admin_manually_enter_leads,Delete_lead,lead_category_graph)
+                    unrecorded_leads_admin,admin_manually_enter_leads,Delete_lead,lead_category_graph,lead_category_current_month)
 
 urlpatterns = [
     path("receive-form/", receive_form_submission, name="receive_form_submission"),
@@ -42,6 +42,7 @@ urlpatterns = [
     path('unrecorded_leads_admin/',unrecorded_leads_admin,name="unrecorded_admin_leads"),
     path('admin_manually_enter_lead/',admin_manually_enter_leads,name="admin_manually_enterLead"),
     path('delete_lead/<int:lead_id>/',Delete_lead,name="deleteLead"),
-    path('lead_category_graph_admin/',lead_category_graph,name="lead_category_graph")
+    path('lead_category_graph_admin/',lead_category_graph,name="lead_category_graph"),
+    path('lead_category_current_month/',lead_category_current_month,name="lead_category_current_month")
     
 ]

@@ -23,5 +23,6 @@ class Leads(models.Model):
 
 
 class LeadCategory(models.Model):
+    timestamp = models.DateTimeField(default=timezone.now)
     lead = models.ForeignKey(Leads,on_delete=models.CASCADE,related_name="lead_category")
     category = models.CharField(max_length=100)
