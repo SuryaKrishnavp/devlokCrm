@@ -137,6 +137,18 @@ def update_databank(request, databank_id):
     if serializer.is_valid():
         print(serializer.errors)
         serializer.save()
+        lead_category_value = request.data.get('lead_category')
+        if lead_category_value:
+            try:
+                lead = databank.lead  # Assuming DataBank has FK to Leads
+            except AttributeError:
+                return Response({"error": "DataBank is not linked to a Lead"}, status=400)
+
+            # Update existing LeadCategory category only (no timestamp change)
+            lead_category_instance = LeadCategory.objects.filter(lead=lead).first()
+            if lead_category_instance:
+                lead_category_instance.category = lead_category_value
+                lead_category_instance.save(update_fields=['category'])
         return Response(serializer.data, status=200)
     
     return Response(serializer.errors, status=400)
