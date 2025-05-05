@@ -92,7 +92,7 @@ def store_data_into_db(request, lead_id):
 
     if serializer.is_valid():
         validated_data = serializer.validated_data
-        lead_category_value = validated_data.pop("lead_category", None)
+        lead_category_value = validated_data.get("lead_category", None)
         databank_entry = DataBank.objects.create(
             lead=lead,
             follower=sales_manager,
