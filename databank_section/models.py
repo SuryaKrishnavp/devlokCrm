@@ -31,7 +31,7 @@ class DataBank(models.Model):
     additional_note = models.CharField(max_length=250,null=True,blank=True)
     follower = models.ForeignKey(Sales_manager_reg,on_delete=models.CASCADE)
     location_link = models.CharField(max_length=500, null=True, blank=True)
-    lead_category = models.CharField(max_length=200,default="General Lead")
+    lead_category = models.CharField(max_length=200)
     
     
     
