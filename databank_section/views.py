@@ -969,7 +969,7 @@ def databank_graph(request):
     for_buy = DataBank.objects.filter(purpose='For Buying a Property').count()
     for_sell = DataBank.objects.filter(purpose='For Selling a Property').count()
     for_rent = DataBank.objects.filter(purpose='For Rental or Lease').count()
-    rental_seeker = DataBank.objects.filter(purpose='Looking to rent or Lease property').count()
+    rental_seeker = DataBank.objects.filter(purpose='Looking to Rent or Lease Property').count()
 
     response_data = {
         "total_collections": total_datas,
@@ -1025,7 +1025,7 @@ def RentSeeker_databank(request):
     # Check if the user is an admin
     if not hasattr(admin, 'admin_reg'):
         return Response({'error': 'Admin authentication required'}, status=status.HTTP_403_FORBIDDEN)
-    buy_list = DataBank.objects.filter(purpose = "Looking to rent or Lease property")
+    buy_list = DataBank.objects.filter(purpose = "Looking to Rent or Lease Property")
     serializer = DataBankGETSerializer(buy_list,many=True).data
     return Response(serializer,status=200)
 
@@ -1090,7 +1090,7 @@ def SalesM_RentSeeker_databank(request):
         return Response({"error": "Not a valid sales manager"}, status=403)
     
     salesmanager = Sales_manager_reg.objects.filter(user=staff.id).first()
-    seeker_list = DataBank.objects.filter(purpose = "Looking to rent or Lease Property",follower=salesmanager)
+    seeker_list = DataBank.objects.filter(purpose = "Looking to Rent or Lease Property",follower=salesmanager)
     serializer = DataBankGETSerializer(seeker_list,many=True).data
     return Response(serializer,status=200)
 
@@ -1243,7 +1243,7 @@ def salesmanager_databank_graph(request):
     for_buy = DataBank.objects.filter(follower=salesmanager, purpose='For Buying a Property').count()
     for_sell = DataBank.objects.filter(follower=salesmanager, purpose='For Selling a Property').count()
     for_rent = DataBank.objects.filter(follower=salesmanager, purpose='For Rental or Lease').count()
-    rental_seeker = DataBank.objects.filter(follower=salesmanager, purpose='Looking to Rent or Lease property').count()
+    rental_seeker = DataBank.objects.filter(follower=salesmanager, purpose='Looking to Rent or Lease Property').count()
 
     response_data = {
         "total_collections": total_datas,
