@@ -32,6 +32,7 @@ class DataBank(models.Model):
     follower = models.ForeignKey(Sales_manager_reg,on_delete=models.CASCADE)
     location_link = models.CharField(max_length=500, null=True, blank=True)
     lead_category = models.CharField(max_length=200)
+    image_folder = models.CharField(max_length=100,null=True,blank=True)
     
     
     
