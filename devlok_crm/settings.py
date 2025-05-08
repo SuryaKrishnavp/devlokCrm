@@ -9,7 +9,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-p9&e07ltcc4ghu**l0b23#huhmldm#8x)fskp)w=$nd62#yah@'
 DEBUG = True
 
-ALLOWED_HOSTS = ["devlokcrm-production.up.railway.app"]  # Set specific Railway domain in production for security
+ALLOWED_HOSTS = ["devlokcrm-production.up.railway.app","devlokcrmfrontend-production.up.railway.app"]  # Set specific Railway domain in production for security
 
 DATABASES_URL = "postgresql://postgres:meRuUbwwDedkcSoUxdUkXwXfvBrPROBZ@crossover.proxy.rlwy.net:12564/railway"
 
